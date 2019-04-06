@@ -17,11 +17,14 @@ public class Employee {
     private String email;
     @Column(unique = true, nullable = false)
     private String phone;
-
+	
+	public Employee() {
+	}
+	
     public Employee(int id) {
         this.id = id;
     }
-
+	
     public int getId() {
         return id;
     }
@@ -69,4 +72,5 @@ public class Employee {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+	
 }
