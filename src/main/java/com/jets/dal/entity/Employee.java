@@ -1,21 +1,34 @@
-package com.jets.dal.dao.com.jets.dal.entity;
+package com.jets.dal.entity;
+
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.NotBlank;
 
+@Entity
 public class Employee {
 
     @Id
     @GeneratedValue
     private int id;
-    @Column(unique = true, nullable = false)
+
+    @Column(unique = true, nullable = false, length = 32)
+    @NotBlank
     private String firstName;
+
     private String middleName;
+
     private String lastName;
-    @Column(unique = true, nullable = false)
+
+    @Column(unique = true, nullable = false, length = 32)
+    @NotBlank
     private String email;
-    @Column(unique = true, nullable = false)
+
+    @Column(unique = true, nullable = false, length = 32)
+    @NotBlank
     private String phone;
 	
 	public Employee() {
@@ -38,7 +51,9 @@ public class Employee {
     }
 
     public void setFirstName(String firstName) {
-        this.firstName = firstName;
+	    if(!firstName.equals("")) {
+            this.firstName = firstName;
+        }
     }
 
     public String getMiddleName() {
@@ -62,7 +77,9 @@ public class Employee {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+	    if(!email.equals("")) {
+            this.email = email;
+        }
     }
 
     public String getPhone() {
@@ -70,7 +87,9 @@ public class Employee {
     }
 
     public void setPhone(String phone) {
-        this.phone = phone;
+	    if(!phone.equals("")) {
+            this.phone = phone;
+        }
     }
 	
 }

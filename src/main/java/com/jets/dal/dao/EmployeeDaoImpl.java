@@ -1,12 +1,12 @@
 package com.jets.dal.dao;
 
-import com.jets.dal.dao.com.jets.dal.entity.Employee;
+import com.jets.dal.entity.Employee;
 import org.hibernate.Criteria;
+import org.hibernate.PropertyValueException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
-import org.hibernate.exception.ConstraintViolationException;
-
+import javax.persistence.PersistenceException;
 import java.util.List;
 
 public class EmployeeDaoImpl implements EmployeeDao {
@@ -20,11 +20,16 @@ public class EmployeeDaoImpl implements EmployeeDao {
         Session session = hibernateSessionFactory.getSession();
         try {
             session.save(employee);
+            hibernateSessionFactory.endTransaction();
         }
-        catch (ConstraintViolationException e) {
+        catch (PropertyValueException e) {
+            throw new EmployeeDaoException(e.getPropertyName()+" should not be empty");
+        }
+        catch (PersistenceException e) {
             throw new EmployeeDaoException("Employee already exists");
         }
-        hibernateSessionFactory.endTransaction();
+        hibernateSessionFactory.getSession().refresh(employee);
+        hibernateSessionFactory.closeSession();
     }
 
     public void update(Employee employee) throws EmployeeDaoException {
@@ -32,11 +37,14 @@ public class EmployeeDaoImpl implements EmployeeDao {
         Session session = hibernateSessionFactory.getSession();
         try {
             session.update(employee);
+            hibernateSessionFactory.endTransaction();
         }
-        catch (ConstraintViolationException e) {
+        catch (PropertyValueException e) {
+            throw new EmployeeDaoException(e.getPropertyName()+" should not be empty");
+        }
+        catch (PersistenceException e) {
             throw new EmployeeDaoException("Employee already exists");
         }
-        hibernateSessionFactory.endTransaction();
     }
 
     public void delete(Employee employee) throws EmployeeDaoException {
@@ -54,6 +62,9 @@ public class EmployeeDaoImpl implements EmployeeDao {
         Session session = hibernateSessionFactory.getSession();
         Criteria criteria = session.createCriteria(Employee.class);
         currentIndex = ((Number)criteria.setProjection(Projections.rowCount()).uniqueResult()).intValue() - 1;
+        if(currentIndex < 0) {
+            currentIndex = 0;
+        }
         return retrieveEmployee(currentIndex);
     }
 
@@ -66,7 +77,11 @@ public class EmployeeDaoImpl implements EmployeeDao {
     }
 
     public Employee retrievePrevious() {
-        Employee employee = retrieveEmployee(currentIndex-1);
+        currentIndex--;
+        if(currentIndex < 0) {
+            currentIndex = 0;
+        }
+        Employee employee = retrieveEmployee(currentIndex);
         if(employee == null) {
             employee = retrieveFirst();
         }

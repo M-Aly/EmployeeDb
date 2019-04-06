@@ -7,17 +7,15 @@ package com.jet.view;
 
 import com.jets.dal.dao.EmployeeDaoException;
 import com.jets.dal.dao.EmployeeDaoImpl;
-import com.jets.dal.dao.com.jets.dal.entity.Employee;
+import com.jets.dal.entity.Employee;
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
 
 /**
@@ -53,6 +51,9 @@ public class EmployeeWindowController implements Initializable {
     private TextField email;
     @FXML
     private TextField phone;
+
+    private static final String EMAIL_REGULAR_EXPRESSION = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
+    private static final String EGYPTIAN_PHONE_REGULAR_EXPRESSION = "^(010|011|012)[0-9]{7}$";
     
     EmployeeDaoImpl employeeDaoImpl ;
     @Override
@@ -60,8 +61,14 @@ public class EmployeeWindowController implements Initializable {
        employeeDaoImpl = new EmployeeDaoImpl();
     }    
 
+    private boolean insertFlag;
+
     @FXML
     private void insertEmployee(ActionEvent event) {
+        insertFlag = true;
+    }
+
+    private void insertEmployee() {
         try {
             Employee employee = new Employee();
             employee.setFirstName(fname.getText());
@@ -70,13 +77,16 @@ public class EmployeeWindowController implements Initializable {
             employee.setEmail(email.getText());
             employee.setPhone(phone.getText());
             employeeDaoImpl.insert(employee);
+            id.setText(""+employee.getId());
+            insertFlag = false;
+            clearEmployee();
+            getAlert("Success", "Insertion done", Alert.AlertType.INFORMATION);
         } catch (EmployeeDaoException ex) {
             getAlert("Error", ex.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
-    @FXML
-    private void updateEmployee(ActionEvent event) {
+    private void updateEmployee() {
          try {
             Employee employee = new Employee();
             employee.setId(Integer.parseInt(id.getText()));
@@ -86,8 +96,41 @@ public class EmployeeWindowController implements Initializable {
             employee.setEmail(email.getText());
             employee.setPhone(phone.getText());
             employeeDaoImpl.update(employee);
+            getAlert("Success", "Update done", Alert.AlertType.INFORMATION);
         } catch (EmployeeDaoException ex) {
             getAlert("Error", ex.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    @FXML
+    private void updateEmployee(ActionEvent event) {
+        boolean error = false;
+        if(!insertFlag) {
+            try {
+                Integer.parseInt(id.getText());
+            }
+            catch (NumberFormatException ex) {
+                error = true;
+                getAlert("Error", "Please select an employee", Alert.AlertType.ERROR);
+            }
+        }
+        if(!error) {
+            if(email.getText().matches(EMAIL_REGULAR_EXPRESSION)) {
+                if(phone.getText().matches(EGYPTIAN_PHONE_REGULAR_EXPRESSION)) {
+                    if(insertFlag) {
+                        insertEmployee();
+                    }
+                    else {
+                        updateEmployee();
+                    }
+                }
+                else {
+                    getAlert("Error", "Enter a valid phone", Alert.AlertType.ERROR);
+                }
+            }
+            else {
+                getAlert("Error", "Enter a valid email", Alert.AlertType.ERROR);
+            }
         }
     }
 
@@ -102,9 +145,22 @@ public class EmployeeWindowController implements Initializable {
             employee.setEmail(email.getText());
             employee.setPhone(phone.getText());
             employeeDaoImpl.delete(employee);
+            clearEmployee();
+            getAlert("Success", "Deletion done", Alert.AlertType.INFORMATION);
         } catch (EmployeeDaoException ex) {
             getAlert("Error", ex.getMessage(), Alert.AlertType.ERROR);
-        }
+        } catch (NumberFormatException ex) {
+             getAlert("Error", "Please select an employee", Alert.AlertType.ERROR);
+         }
+    }
+
+    private void clearEmployee() {
+        id.setText("");
+        fname.setText("");
+        mname.setText("");
+        lname.setText("");
+        email.setText("");
+        phone.setText("");
     }
 
     @FXML
